@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.confluent.csflt</groupId>
+  <artifactId>field-tokenization-executor</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+  <name>Client-Side Field Level Tokenization Executor</name>
+  <description>
+    A Schema Registry TOKENIZE rule executor — the tokenization counterpart to
+    Confluent's built-in ENCRYPT (CSFLE) FieldEncryptionExecutor. Replaces
+    tagged field values with vault-issued tokens (type/length preserving) on
+    write, and resolves them back on read, by calling an external tokenization
+    vault. DEMO / PROTOTYPE for a not-yet-shipped capability.
+  </description>
+
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Match the CP version the executor is dropped into. -->
+    <confluent.version>8.3.2</confluent.version>
+    <jackson.version>2.17.2</jackson.version>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>confluent</id>
+      <url>https://packages.confluent.io/maven/</url>
+    </repository>
+  </repositories>
+
+  <dependencies>
+    <!-- The rules SPI (FieldRuleExecutor, RuleContext, FieldTransform, …).
+         'provided' — already on CP's classpath at runtime; we must not shade it. -->
+    <dependency>
+      <groupId>io.confluent</groupId>
+      <artifactId>kafka-schema-registry-client</artifactId>
+      <version>${confluent.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Jackson for the tiny vault request/response JSON. Also already on CP's
+         classpath (the SR serializers depend on it), so 'provided' / not shaded. -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Tests -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.3</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>field-tokenization-executor-${project.version}</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
+      <!-- Shade only OUR code + any (non-provided) runtime deps into a single
+           drop-in JAR. All Confluent/Jackson deps are 'provided', so the shaded
+           jar stays tiny — just our classes. java.net.http is in the JDK. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals><goal>shade</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,25 @@
+# Secrets — never commit
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Java / Maven build output
+executor/target/
+
+# Mock vault local state
+*.db
+*.db-wal
+*.db-shm
+
+# Subprocess logs
+scripts/logs/
+
+# IDE / OS
+.idea/
+.vscode/
+*.DS_Store
